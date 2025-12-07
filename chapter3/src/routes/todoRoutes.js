@@ -1,50 +1,72 @@
 import express from 'express'
-import db from '../db.js'
+import prisma from '../prismaClient.js';
 
 const todoRoutes = express.Router();
 
-todoRoutes.get('/', (req,res) => { // req comes from the middleware
-    const getTodos = db.prepare(`Select * from todos where user_id = ?`);
-    // console.log(req.userId);
-    const todos = getTodos.all(req.userId);
+todoRoutes.get('/', async (req,res) => { // req comes from the middleware
+    const todos = await prisma.todo.findMany({
+        where:{
+            userId: req.userId
+        }
+    })
     res.json(todos);
 })
 
-todoRoutes.post('/', (req,res) => {
+todoRoutes.post('/', async (req,res) => {
     const {task} = req.body;
-    const insertTodo = db.prepare(`insert into todos (user_id,task) values (?,?)`);
-    const result = insertTodo.run(req.userId,task);
 
-    res.json({id: result.lastInsertRowid,task,completed:0}); 
+    const todo = await prisma.todo.create({
+        data:{
+            task: task,
+            userId: req.userId
+        }
+    })
+
+    res.json(todo); 
 })
 
-todoRoutes.put('/:id' ,(req,res) => {
+todoRoutes.put('/:id' ,async (req,res) => {
     const {completed} = req.body;
     const {id} = req.params;
     
-    const findTodo = db.prepare(`select * from todos where id = ? and user_id = ?`);
-    const todo = findTodo.get(id,req.userId);
+    const todo = await prisma.todo.findUnique({
+        where:{
+            id: parseInt(id),
+        }
+    })
     if(!todo){
         return res.status(404).send({message: "Todo not found!!"});
     }
 
-    const updateTodo = db.prepare(`update todos set completed=? where id = ?`);
-    updateTodo.run(completed,id);
+    const updateTodo = await prisma.todo.update({
+        where:{
+            id: parseInt(id),
+        },
+        data:{
+            completed: !!completed
+        }
+    })
 
     res.json(({message: "Todo Updated"}));
 })
 
-todoRoutes.delete('/:id', (req,res) => {
+todoRoutes.delete('/:id', async (req,res) => {
     const {id} = req.params;
 
-    const findTodo = db.prepare(`select * from todos where id = ? and user_id = ?`);
-    const todo = findTodo.get(id,req.userId);
+    const todo = await prisma.todo.findUnique({
+        where:{
+            id: parseInt(id),
+        }
+    })
     if(!todo){
         return res.status(404).send({message: "Todo not found!!"});
     }
 
-    const deleteTodo = db.prepare(`delete from todos where id = ? and user_id = ?`);
-    deleteTodo.run(id,req.userId);
+    const deleteTodo = await prisma.todo.delete({
+        where:{
+            id: parseInt(id),
+        }
+    })
 
     res.json("Todo Deleted");
 })

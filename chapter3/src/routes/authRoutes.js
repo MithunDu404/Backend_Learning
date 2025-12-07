@@ -1,16 +1,20 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import db from '../db.js';
+import prisma from '../prismaClient.js';
 
 const authRoutes = express.Router();
 
-authRoutes.post('/login', (req,res) => {
+authRoutes.post('/login', async (req,res) => {
     const {username,password} = req.body;
     
     try{
-        const getUser = db.prepare(`select * from users where username = ?`);
-        const user = getUser.get(username);
+
+        const user = await prisma.user.findUnique({
+            where:{
+                username: username
+            }
+        })
         if(!user){
             return res.status(404).send({message:"User not Found!!"});
         }
@@ -30,21 +34,26 @@ authRoutes.post('/login', (req,res) => {
     }
 })
 
-authRoutes.post('/register', (req,res) => {
+authRoutes.post('/register', async (req,res) => {
     const {username,password} = req.body;
     const encryptPass = bcrypt.hashSync(password,8);
     
     try{
-        const insertUser = db.prepare(`insert into users (username,password) values (?,?)`);
-        const result = insertUser.run(username,encryptPass);
+        const user = await prisma.user.create({
+            data:{
+                username: username,
+                password: encryptPass
+            }
+        })
 
-        const defaultTodo = `Hello :) Add your first TODO`;
-        const insertTodo = db.prepare(`insert into todos (user_id,task) values (?,?)`)
-        insertTodo.run(result.lastInsertRowid,defaultTodo);
+        const insertTodo = await prisma.todo.create({
+            data:{
+                task: "Hello :) I am your first TODO (Dummy)!",
+                userId: user.id
+            }
+        })
 
-        const token = jwt.sign({id: result.lastInsertRowid},process.env.JWT_TOKEN, {expiresIn: '24h'})
-
-        // console.log(token);
+        const token = jwt.sign({id: user.id},process.env.JWT_TOKEN, {expiresIn: '24h'})
         res.json({token});
 
     }catch(err){

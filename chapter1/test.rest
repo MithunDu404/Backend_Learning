@@ -1,0 +1,16 @@
+GET http://localhost:8383/api/data
+###
+GET http://localhost:8383
+###
+GET http://localhost:8383/home
+
+###
+POST http://localhost:8383/api/data
+Content-Type: application/json
+
+{
+    "name": "Rahul"
+}
+
+###
+DELETE http://localhost:8383/api/data

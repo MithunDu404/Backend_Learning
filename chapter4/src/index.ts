@@ -28,5 +28,6 @@ app.use('/auth', authRoutes);
 app.use('/todos', authMiddleware, todoRoutes);
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT} `);
+  console.log(`Visit the url : http://localhost:${PORT} `)
 });

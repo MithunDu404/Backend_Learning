@@ -1,5 +1,5 @@
 import express, { type Request, type Response } from 'express';
-import { prisma } from '../../lib/prisma';
+import { prisma } from '../lib/prisma';
 
 const todoRoutes = express.Router();
 

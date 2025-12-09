@@ -27,6 +27,6 @@ model Todo{
   completed Boolean @default(false)
 
   userId Int
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
